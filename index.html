@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset=utf-8 />
+	<title>A Day in the Life</title>
+	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+
+	<link href="https://fonts.googleapis.com/css?family=Noto+Sans" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css?family=Lora" rel="stylesheet">
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			font-family: "Noto Sans", sans-serif;
+			color: #3d3d3d;
+		}
+
+		h1 {
+			position: absolute;
+			margin-top: 0;
+			top: 10px;
+			left: 15px;
+			font-size: 2em;
+			font-family: "Lora", serif;
+			letter-spacing: .04em;
+			padding: 10px 15px;
+			background: rgba(256, 256, 256, .4);
+			border: 1px solid grey;
+			border-radius: 3px;
+			z-index: 800;
+		}
+
+		h2 {
+			font-family: "Lora", serif;
+			letter-spacing: .04em;
+		}
+
+		#map {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 100%;
+		}
+
+		#about {
+			position: absolute;
+			bottom: 20px;
+			left: 15px;
+			width: 280px;
+			padding: 0 15px;
+			background: rgba(256, 256, 256, .4);
+			border: 1px solid grey;
+			border-radius: 3px;
+			z-index: 800;
+		}
+
+		p {
+			font-size: .9em;
+			line-height: 1.5em;
+		}
+
+		a {
+			color: #005daa;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+	</style>
+</head>
+
+<body>
+
+	<h1>A Day in the Life</h1>
+
+	<div id='map'></div>
+
+	<section id="about">
+		<h2>From here, to there...</h2>
+		<p>The daily commute to work can be a dreaded daily task, especially on a Monday morning, during heavy traffic, in incliment weather. It can easily set the tone for your entire day. So why not add something enjoyable to an otherwise arduous activity. A
+			quick stop at your favorite coffee house or bakery perhaps? Or stop at the libary and pick up a new audiobook that will make you want to extend your commute just to hear how a chapter ends.
+		</p>
+		<p>With this map you can design a commute with your driving and daily satisfaction in mind.</p>
+		<!-- <p>Map authored by me, Danielle Bargovic</p> -->
+	</section>
+
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+	<script src="data/route.js"></script>
+	<script>
+		//Options to be used when creating the map
+		var options = {
+			zoomControl: false
+		}
+		// console.log(routeData);
+		//Creation of the Leaflet Map
+		var map = L.map('map', options);
+		//Zoom tool creation
+		L.control.zoom({
+			position: 'topright'
+		}).addTo(map);
+		//request to load basemap slippy tiles
+		var tiles = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+			subdomains: 'abcd',
+			maxZoom: 19
+		}).addTo(map);
+		//string content to be inserted in the tooltip
+		// var message = 'University of Kentucky!';
+		//
+		// L.marker(map.getCenter()) //create leaflet marker, centered on maps center
+		// 	.bindTooltip(message) //bind the tooltip and message to the marker
+		// 	.addTo(map) //add the marker to the map
+		// 	.openTooltip(); //open the tooltip
+
+		// object to hold default route style path options
+		var routeStyles = {
+			color: "purple",
+			weight: 4,
+			opacity: .6,
+			dashArray: "6.5"
+		};
+
+		// var myRoute = L.geoJson(routeData).addTo(map);
+		var myRoute = L.geoJson(routeData, {
+
+			// filter FeatureCollection to include only polylines
+			filter: function(feature) {
+				if (feature.geometry.type == "LineString") {
+					return feature;
+				}
+			},
+			style: function(feature) {
+				// apply default styles
+				return routeStyles;
+			}
+		}).addTo(map);
+
+		// visual affordance for mousing over route line
+		myRoute.on('mouseover', function(e) {
+			e.target.setStyle({
+				color: 'red',
+				opacity: 1,
+				weight: 5
+			});
+		});
+
+		// reset route to original style
+		myRoute.on('mouseout', function(e) {
+			e.target.setStyle(routeStyles);
+		});
+
+		var marker = L.geoJson(routeData, {
+
+			// filter FeatureCollection for point features
+			filter: function(feature) {
+				if (feature.geometry.type == "Point") {
+					return feature;
+				}
+			},
+			onEachFeature: function(feature, layer) {
+				// bind name of each point feature to tooltip
+				layer.bindTooltip(feature.properties.name);
+			}
+		}).addTo(map)
+
+		//create click and zoom functionality when marker is clicked
+		marker.on('click', function(e) {
+			map.setView(e.latlng, 15);
+		});
+
+		// recenter map and zoom to extent of features
+		map.fitBounds(myRoute.getBounds());
+	</script>
+
+</body>
+
+</html>
